@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control de Navegador y PC</title>
+  <link rel="stylesheet" href="{% static 'host/style.css' %}" nonce="" />
+</head>
+
+<body>
+  {% csrf_token %}
+  <main>
+    <div class="container">
+      <header>
+        <h1>Estado del Servidor</h1>
+        <div class="status">
+          <p class="h2">DESCONECTADO</p>
+        </div>
+      </header>
+      <div class="contenedor_button">
+        <div class="button load-more--loading ">
+          <span>*</span>
+          <div>Iniciar</div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+</body>
+
+</html>
