@@ -1,18 +1,10 @@
-cookies.txt
-log.txt
+# Carpetas
 __pycache__/
 docs/
-user
-user.txt
-*.json
-cookies_browser.json
-*.txt
-test.py
-test2.py
-*.ini
-good/
+.vscode/
 .venv/
+
+# Extensiones
+
 *.egg-info
-script.py
-vcr_cassettes/
-*.xz
+*.json
