@@ -7,11 +7,12 @@ from servercontrol.core.handlers import register_handlers
 
 
 def main(path: Union[Path, str]):
-    path= Path(path) if isinstance(path, str) else path
-        
+    
+    path= Path(path) if isinstance(path, str) else path        
     config= load_config_orchestator(path)
     client= init_telegram_client(config.tg_config)
-    register_handlers(client)
+    register_handlers(client, config.lab_config)  
+    print("Bot iniciado con exito")  
     client.run()
 
 if __name__ == "__main__":
