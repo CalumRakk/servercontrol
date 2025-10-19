@@ -24,6 +24,7 @@ def get_aws_status(client, message, config: LabConfig):
         if result.success is True:
             message.reply(result.status.value)
         else:
-            message.reply(result.error)
+            message.reply("No se pudo obtener el estado de AWS. Intente de nuevo.")
+            config.vocareum_cookies_path.unlink(missing_ok=True)
     except Exception as e:
         message.reply(str(e))
