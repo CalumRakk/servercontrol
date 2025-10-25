@@ -25,6 +25,25 @@ class ManagerConfig():
     
 
 def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfig:
+    """
+    Carga el archivo de configuración de orchestra.
+
+    Args:
+        env_path (Union[Path, str], optional): El path al archivo de configuración. Por defecto es ".env". 
+                                             Si es una ruta, se usa como string. 
+        Debe ser un nombre de archivo que contenga las siguientes configuraciones:
+
+            - BotToken
+            - ApiId
+            - ApiHash
+
+    Returns:
+        ManagerConfig: Objeto con las configuraciones específicas para Telegram y Lab.
+
+    Raises:
+        FileNotFoundError: Si el archivo de configuración no existe.
+        ValidationError: Si hay errores en la configuración del archivo de configuración.
+    """
     env_path = Path(env_path) if isinstance(env_path, str) else env_path
     try:
         if env_path.exists():                 
