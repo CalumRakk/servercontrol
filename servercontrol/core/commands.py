@@ -1,5 +1,7 @@
 
 
+from pathlib import Path
+
 from labcontrol.config import Config as LabConfig
 from labcontrol.schema import AWSStatus, LabStatus
 from labcontrol.utils import get_params_with_config
@@ -8,12 +10,13 @@ from pyrogram import enums
 
 from .utils import should_wait_get_params
 
+ADMIN_IDS=[int(i) for i in  Path("admin_ids.txt").read_text().splitlines()]
 
 def echo(client, message):
     message.reply(message.text)
 
 def help(client, message):
-    message.reply("Comandos disponibles: /status")
+    message.reply("Comandos disponibles:\n /status - Obtiene el estado de la maquina.\n /start - Enciende la maquina.\n /end - Apaga la maquina.")
 
 def get_aws_status(client, message, config: LabConfig):
     try:
@@ -60,6 +63,10 @@ def get_aws_status(client, message, config: LabConfig):
 
 def start_aws(client, message, config: LabConfig):
     try:
+        if not message.from_user.id in ADMIN_IDS:
+            message.reply("No tienes permiso para usar este comando.")
+            return
+
         if should_wait_get_params(config):
             message.reply("Esperando a que se obtenga la información de Vocareum. Esto puede toma un tiempo.")
 
@@ -92,6 +99,10 @@ def start_aws(client, message, config: LabConfig):
 
 def end_aws(client, message, config: LabConfig):
     try:
+        if not message.from_user.id in ADMIN_IDS:
+            message.reply("No tienes permiso para usar este comando.")
+            return
+
         if should_wait_get_params(config):
             message.reply("Esperando a que se obtenga la información de Vocareum. Esto puede toma un tiempo.")
 

@@ -9,3 +9,4 @@ docs/
 
 *.egg-info
 *.json
+*.txt
