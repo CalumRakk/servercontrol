@@ -28,6 +28,7 @@ def init_telegram_client(settings: TelegramConfig):
         api_hash=settings.api_hash,
         workdir=str(settings.worktable),
         lang_code=iso639,
+        bot_token=settings.bot_token
     )
     logger.info("Cliente de Telegram inicializado correctamente")
     _client_instance= client

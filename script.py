@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Union
 
+
 from servercontrol.config import load_config_orchestator
 from servercontrol.core.client_tg import init_telegram_client
 from servercontrol.core.handlers import register_handlers
@@ -13,6 +14,7 @@ def main(path: Union[Path, str]):
     client= init_telegram_client(config.tg_config)
     register_handlers(client, config.lab_config)  
     print("Bot iniciado con exito")  
+
     client.run()
 
 if __name__ == "__main__":

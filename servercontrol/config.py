@@ -10,6 +10,7 @@ from .core.settings import TelegramConfig
 
 class GeneralConfig(BaseSettings):
     # Telegram
+    session_name: str = "bot_session"
     bot_token: str
     api_hash: str = Field(description="Telegram API hash")
     api_id: int = Field(description="Telegram API ID")
@@ -50,6 +51,7 @@ def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfi
             client_client= GeneralConfig(_env_file=env_path)  # type: ignore
             
             tg_config= TelegramConfig(
+                session_name=client_client.session_name,
                 bot_token=client_client.bot_token, 
                 api_id=client_client.api_id, api_hash=client_client.api_hash
             )
