@@ -1,9 +1,12 @@
 from pathlib import Path
+from typing import cast
 
 from labcontrol.config import Config as LabConfig
-from labcontrol.schema import LabStatus
+from labcontrol.parser import parse_lab_aws_details_content
+from labcontrol.schema import AWSDetailsRunning, LabStatus
 from labcontrol.utils import get_params_with_config
 from labcontrol.vocareum_http import VocareumApi
+from pyrogram import enums
 
 from .utils import should_wait_get_params
 
@@ -19,7 +22,9 @@ def help(client, message):
         "Comandos disponibles:\n"
         " /pc_status - Obtiene el estado de la máquina.\n"
         " /pc_start - Enciende la máquina o reinicia el tiempo de apago.\n"
-        " /pc_end - Apaga la máquina."
+        " /pc_end - Apaga la máquina.\n"
+        " /pc_details - Obtiene los detalles de la máquina.\n"
+        " /pc_sso - Obtiene el enlace SSO de AWS.\n"
     )
 
 
@@ -89,9 +94,10 @@ def start_aws(client, message, config: LabConfig):
             return
         elif status_result.status == LabStatus.ready:
             message.reply(
-                "La Máquina está encendida, reiniciando el tiempo de apago de la Máquina encendida..."
+                "La Máquina está encendida, reiniciando el tiempo de apagado..."
             )
         elif status_result.status == LabStatus.stopped:
+            message.reply("Por favor espera a que se encienda la Máquina...")
             is_creation = True
         else:
             message.reply("No se pudo obtener el estado de AWS. Intente de nuevo.")
@@ -102,15 +108,15 @@ def start_aws(client, message, config: LabConfig):
             return handle_api_error(message, config)
 
         if is_creation:
-            message.reply("Por favor espera a que se encienda la Máquina.")
+            message.reply("Encendiendo la Máquina...")
             vocareum_api._wait_if_in_creation()
-            message.reply("Máquina creada con exito.")
+            message.reply("Máquina encendida con éxito.")
+            message.reply(
+                "La Máquina se apagará en 4 horas. Recuerda usar /pc_start para reiniciar el tiempo de apagado."
+            )
         else:
-            message.reply("Tiempo de apago de Máquina restablecido.")
+            message.reply("Tiempo de apagado de Máquina restablecido.")
 
-        message.reply(
-            "La Máquina se apagará en 4 horas. Recuerda usar /pc_start para reiniciar el tiempo de apago."
-        )
     except Exception as e:
         message.reply(str(e))
 
@@ -134,6 +140,7 @@ def end_aws(client, message, config: LabConfig):
             message.reply("La Máquina ya estaba apagada.")
             return
 
+        message.reply("Apagando la Máquina...")
         result = vocareum_api.end_aws()
         if result.success is False:
             return handle_api_error(message, config)
@@ -143,27 +150,61 @@ def end_aws(client, message, config: LabConfig):
         message.reply(str(e))
 
 
-# def get_aws(client, message, config: LabConfig):
-#     try:
-#         if should_wait_get_params(config):
-#             message.reply("Esperando a que se obtenga la información de Vocareum. Esto puede toma un tiempo.")
+def get_aws_sso(client, message, config: LabConfig):
+    try:
+        if not ensure_admin(message):
+            return
 
-#         params= get_params_with_config(config)
-#         vocareum_api = VocareumApi(params)
+        vocareum_api = prepare_vocareum_api(message, config)
+        result = vocareum_api.get_aws_status()
+        if result.success is False:
+            return handle_api_error(message, config)
 
-#         result = vocareum_api.get_aws()
-#         if isinstance(result, AWSStatus):
-#             if result.success is True:
-#                 msg= f"Parece que la Máquina se esta encendiendo. Por favor, espera un momento. Lab status: {result.status.value}"
-#                 message.reply(msg)
-#                 return
-#         elif isinstance(result, AWSContent):
-#             if result.success is True:
-#                 content_parsed= parse_lab_aws_details_content(result.content)
-#                 message.reply(content_parsed.model_dump_json(indent=4), parse_mode=enums.ParseMode.MARKDOWN)
-#                 return
+        if result.status != LabStatus.ready:
+            message.reply("La Máquina no está encendida. No se puede obtener SSO.")
+            return
 
-#         message.reply("No se pudo obtener el estado de AWS. Intente de nuevo.")
-#         config.vocareum_cookies_path.unlink(missing_ok=True)
-#     except Exception as e:
-#         message.reply(str(e))
+        message.reply("Obteniendo SSO de AWS...")
+        content = vocareum_api.get_aws()
+        if content.success is False:
+            return handle_api_error(message, config)
+
+        content_parsed = cast(
+            AWSDetailsRunning, parse_lab_aws_details_content(content.content)
+        )
+        result = vocareum_api.get_aws_sso(content_parsed.aws_sso)
+        message.reply(
+            f"Enlace SSO de AWS: `{result}`", parse_mode=enums.ParseMode.MARKDOWN
+        )
+    except Exception as e:
+        message.reply(str(e))
+
+
+def get_aws(client, message, config: LabConfig):
+    try:
+        if not ensure_admin(message):
+            return
+
+        vocareum_api = prepare_vocareum_api(message, config)
+        status_result = vocareum_api.get_aws_status()
+        if status_result.success is False:
+            return handle_api_error(message, config)
+
+        message.reply("Obteniendo detalles de la Máquina...")
+        result = vocareum_api.get_aws()
+        if result.success is False:
+            return handle_api_error(message, config)
+
+        content_parsed = parse_lab_aws_details_content(result.content)
+        text_message = f"""
+**Detalles de la Máquina**
+```json
+{content_parsed.model_dump_json(indent=4)}
+```
+"""
+        message.reply(
+            text_message,
+            parse_mode=enums.ParseMode.MARKDOWN,
+        )
+    except Exception as e:
+        message.reply(str(e))

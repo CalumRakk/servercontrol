@@ -14,24 +14,31 @@ class GeneralConfig(BaseSettings):
     bot_token: str
     api_hash: str = Field(description="Telegram API hash")
     api_id: int = Field(description="Telegram API ID")
-    
+
     # Academy AWS
     unique_id: str
     password: str
 
-class ManagerConfig():
+    aws_instance_id: str = Field(description="ID de la instancia EC2 de AWS")
+    aws_region: str = Field(default="us-east-1", description="Región de AWS")
+
+    duckdns_domain: str = Field(description="Dominio de DuckDNS")
+    duckdns_token: str = Field(description="Token de DuckDNS")
+
+
+class ManagerConfig:
     def __init__(self, tg_config: TelegramConfig, lab_config: LabConfig) -> None:
-        self.tg_config= tg_config
-        self.lab_config= lab_config
-    
+        self.tg_config = tg_config
+        self.lab_config = lab_config
+
 
 def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfig:
     """
     Carga el archivo de configuración de orchestra.
 
     Args:
-        env_path (Union[Path, str], optional): El path al archivo de configuración. Por defecto es ".env". 
-                                             Si es una ruta, se usa como string. 
+        env_path (Union[Path, str], optional): El path al archivo de configuración. Por defecto es ".env".
+                                             Si es una ruta, se usa como string.
         Debe ser un nombre de archivo que contenga las siguientes configuraciones:
 
             - BotToken
@@ -47,20 +54,19 @@ def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfi
     """
     env_path = Path(env_path) if isinstance(env_path, str) else env_path
     try:
-        if env_path.exists():                 
-            client_client= GeneralConfig(_env_file=env_path)  # type: ignore
-            
-            tg_config= TelegramConfig(
+        if env_path.exists():
+            client_client = GeneralConfig(_env_file=env_path)  # type: ignore
+
+            tg_config = TelegramConfig(
                 session_name=client_client.session_name,
-                bot_token=client_client.bot_token, 
-                api_id=client_client.api_id, api_hash=client_client.api_hash
+                bot_token=client_client.bot_token,
+                api_id=client_client.api_id,
+                api_hash=client_client.api_hash,
             )
-            lab_config= LabConfig(
-                unique_id=client_client.unique_id, 
-                password=client_client.password
+            lab_config = LabConfig(
+                unique_id=client_client.unique_id, password=client_client.password
             )
-            return ManagerConfig(tg_config, lab_config)    
-        
+            return ManagerConfig(tg_config, lab_config)
 
         raise FileNotFoundError(f"El archivo de configuración {env_path} no existe.")
     except ValidationError as e:

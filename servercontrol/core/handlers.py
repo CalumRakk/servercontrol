@@ -2,7 +2,7 @@ from labcontrol.config import Config as LabConfig
 from pyrogram import Client, filters  # type: ignore
 from pyrogram.handlers import MessageHandler  # type: ignore
 
-from .commands import end_aws, get_aws_status, help, start_aws
+from .commands import end_aws, get_aws, get_aws_sso, get_aws_status, help, start_aws
 
 
 def register_handlers(app: Client, config: LabConfig):
@@ -26,5 +26,17 @@ def register_handlers(app: Client, config: LabConfig):
             filters.command("pc_end") & filters.private,
         )
     )
-    # app.add_handler(MessageHandler(lambda client, message: get_aws(client, message, config), filters.command("content") & filters.private))
+    app.add_handler(
+        MessageHandler(
+            lambda client, message: get_aws(client, message, config),
+            filters.command("pc_details") & filters.private,
+        )
+    )
+    app.add_handler(
+        MessageHandler(
+            lambda client, message: get_aws_sso(client, message, config),
+            filters.command("pc_sso") & filters.private,
+        )
+    )
+
     app.add_handler(MessageHandler(help, filters.command("help")))
