@@ -27,9 +27,12 @@ class GeneralConfig(BaseSettings):
 
 
 class ManagerConfig:
-    def __init__(self, tg_config: TelegramConfig, lab_config: LabConfig) -> None:
+    def __init__(
+        self, tg_config: TelegramConfig, lab_config: LabConfig, client: GeneralConfig
+    ) -> None:
         self.tg_config = tg_config
         self.lab_config = lab_config
+        self.client = client
 
 
 def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfig:
@@ -55,18 +58,16 @@ def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfi
     env_path = Path(env_path) if isinstance(env_path, str) else env_path
     try:
         if env_path.exists():
-            client_client = GeneralConfig(_env_file=env_path)  # type: ignore
+            client = GeneralConfig(_env_file=env_path)  # type: ignore
 
             tg_config = TelegramConfig(
-                session_name=client_client.session_name,
-                bot_token=client_client.bot_token,
-                api_id=client_client.api_id,
-                api_hash=client_client.api_hash,
+                session_name=client.session_name,
+                bot_token=client.bot_token,
+                api_id=client.api_id,
+                api_hash=client.api_hash,
             )
-            lab_config = LabConfig(
-                unique_id=client_client.unique_id, password=client_client.password
-            )
-            return ManagerConfig(tg_config, lab_config)
+            lab_config = LabConfig(unique_id=client.unique_id, password=client.password)
+            return ManagerConfig(tg_config, lab_config, client=client)
 
         raise FileNotFoundError(f"El archivo de configuración {env_path} no existe.")
     except ValidationError as e:

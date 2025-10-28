@@ -25,6 +25,7 @@ def help(client, message):
         " /pc_end - Apaga la máquina.\n"
         " /pc_details - Obtiene los detalles de la máquina.\n"
         " /pc_sso - Obtiene el enlace SSO de AWS.\n"
+        " /update_ip - Actualiza la IP en DuckDNS.\n"
     )
 
 
