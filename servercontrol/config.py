@@ -1,3 +1,5 @@
+# servercontrol/config.py (versión corregida y mejorada)
+
 from pathlib import Path
 from typing import Union
 
@@ -8,68 +10,78 @@ from pydantic_settings import BaseSettings
 from .core.settings import TelegramConfig
 
 
-class GeneralConfig(BaseSettings):
-    # Telegram
-    session_name: str = "bot_session"
-    bot_token: str
-    api_hash: str = Field(description="Telegram API hash")
-    api_id: int = Field(description="Telegram API ID")
+class AWSConfig(BaseSettings):
+    """Configuración específica para la interacción directa con AWS via boto3."""
 
-    # Academy AWS
+    aws_instance_id: str = Field(..., description="ID de la instancia EC2 de AWS")
+    aws_region: str = Field("us-east-1", description="Región de AWS")
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        extra = "ignore"
+
+
+class DuckDNSConfig(BaseSettings):
+    """Configuración específica para DuckDNS."""
+
+    duckdns_domain: str = Field(..., description="Dominio de DuckDNS")
+    duckdns_token: str = Field(..., description="Token de DuckDNS")
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        extra = "ignore"
+
+
+class LabControlEnvVars(BaseSettings):
+    """Clase temporal solo para leer las variables de labcontrol desde el .env"""
+
     unique_id: str
     password: str
 
-    aws_instance_id: str = Field(description="ID de la instancia EC2 de AWS")
-    aws_region: str = Field(default="us-east-1", description="Región de AWS")
-
-    duckdns_domain: str = Field(description="Dominio de DuckDNS")
-    duckdns_token: str = Field(description="Token de DuckDNS")
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        extra = "ignore"
 
 
 class ManagerConfig:
     def __init__(
-        self, tg_config: TelegramConfig, lab_config: LabConfig, client: GeneralConfig
+        self,
+        tg_config: TelegramConfig,
+        lab_config: LabConfig,
+        aws_config: AWSConfig,
+        duckdns_config: DuckDNSConfig,
     ) -> None:
         self.tg_config = tg_config
         self.lab_config = lab_config
-        self.client = client
+        self.aws_config = aws_config
+        self.duckdns_config = duckdns_config
 
 
 def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfig:
-    """
-    Carga el archivo de configuración de orchestra.
+    """Carga la configuración combinada para el orquestador desde un archivo .env."""
+    env_file = Path(env_path) if isinstance(env_path, str) else env_path
+    if not env_file.exists():
+        raise FileNotFoundError(f"El archivo de configuración {env_file} no existe.")
 
-    Args:
-        env_path (Union[Path, str], optional): El path al archivo de configuración. Por defecto es ".env".
-                                             Si es una ruta, se usa como string.
-        Debe ser un nombre de archivo que contenga las siguientes configuraciones:
-
-            - BotToken
-            - ApiId
-            - ApiHash
-
-    Returns:
-        ManagerConfig: Objeto con las configuraciones específicas para Telegram y Lab.
-
-    Raises:
-        FileNotFoundError: Si el archivo de configuración no existe.
-        ValidationError: Si hay errores en la configuración del archivo de configuración.
-    """
-    env_path = Path(env_path) if isinstance(env_path, str) else env_path
     try:
-        if env_path.exists():
-            client = GeneralConfig(_env_file=env_path)  # type: ignore
+        tg_config = TelegramConfig(_env_file=env_file)  # type: ignore
+        aws_config = AWSConfig(_env_file=env_file)  # type: ignore
+        duckdns_config = DuckDNSConfig(_env_file=env_file)  # type: ignore
 
-            tg_config = TelegramConfig(
-                session_name=client.session_name,
-                bot_token=client.bot_token,
-                api_id=client.api_id,
-                api_hash=client.api_hash,
-            )
-            lab_config = LabConfig(unique_id=client.unique_id, password=client.password)
-            return ManagerConfig(tg_config, lab_config, client=client)
+        lab_env_vars = LabControlEnvVars(_env_file=env_file)  # type: ignore
+        lab_config = LabConfig(
+            unique_id=lab_env_vars.unique_id, password=lab_env_vars.password
+        )
 
-        raise FileNotFoundError(f"El archivo de configuración {env_path} no existe.")
+        return ManagerConfig(
+            tg_config=tg_config,
+            lab_config=lab_config,
+            aws_config=aws_config,
+            duckdns_config=duckdns_config,
+        )
     except ValidationError as e:
-        print("Error en configuración:", e)
+        print(f"Error en la configuración del archivo {env_file}:\n{e}")
         raise

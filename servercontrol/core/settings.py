@@ -36,6 +36,11 @@ class TelegramConfig(BaseSettings):
     app_name: str = "server_mc_9000"
     worktable: Path = Path(get_user_config_dir(app_name)).resolve()
 
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        extra = "ignore"
+
 
 def load_config(env_path: Union[Path, str] = ".env") -> TelegramConfig:
     env_path = Path(env_path) if isinstance(env_path, str) else env_path
