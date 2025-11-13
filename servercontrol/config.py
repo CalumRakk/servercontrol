@@ -71,5 +71,5 @@ def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfi
 
         raise FileNotFoundError(f"El archivo de configuración {env_path} no existe.")
     except ValidationError as e:
-        print("❌ Error en configuración:", e)
+        print("Error en configuración:", e)
         raise

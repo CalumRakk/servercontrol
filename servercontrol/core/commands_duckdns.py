@@ -43,7 +43,7 @@ def wait_for_instance_ip(message, instance_id: str, region: str) -> str | None:
             message.reply(f"Error al consultar la instancia: {e}")
             time.sleep(CHECK_INTERVAL)
 
-    message.reply("⚠️ Tiempo máximo de espera alcanzado. No se obtuvo IP pública.")
+    message.reply("Tiempo máximo de espera alcanzado. No se obtuvo IP pública.")
     return None
 
 
