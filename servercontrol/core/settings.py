@@ -31,7 +31,7 @@ class TelegramConfig(BaseSettings):
     api_hash: str = Field(description="Telegram API hash")
     api_id: int = Field(description="Telegram API ID")
 
-    # opcionales
+
     session_name: str = "me"
     app_name: str = "server_mc_9000"
     worktable: Path = Path(get_user_config_dir(app_name)).resolve()

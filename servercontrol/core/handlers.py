@@ -14,7 +14,7 @@ from .commands_academy import (
 )
 
 
-def register_handlers(app: Client, config: ManagerConfig): # <-- Cambiar firma para recibir ManagerConfig
+def register_handlers(app: Client, config: ManagerConfig):
 
     # app.add_handler(MessageHandler(echo, filters.text & filters.private))
     app.add_handler(
@@ -48,7 +48,6 @@ def register_handlers(app: Client, config: ManagerConfig): # <-- Cambiar firma p
         )
     )
 
-    # --- REGISTRO DEL NUEVO COMANDO ---
     app.add_handler(
         MessageHandler(
             lambda client, message: update_ip(client, message, config),
