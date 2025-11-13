@@ -1,8 +1,6 @@
-import time
 from pathlib import Path
 from typing import cast
 
-import boto3
 from labcontrol.config import Config as LabConfig
 from labcontrol.parser import parse_lab_aws_details_content
 from labcontrol.schema import AWSDetailsRunning, LabStatus
@@ -10,9 +8,6 @@ from labcontrol.utils import get_params_with_config
 from labcontrol.vocareum_http import VocareumApi
 from pyrogram import enums
 
-from servercontrol.config import ManagerConfig
-
-from .commands_duckdns import update_duckdns
 from .utils import should_wait_get_params
 
 ADMIN_IDS = [int(i) for i in Path("admin_ids.txt").read_text().splitlines()]
@@ -34,47 +29,9 @@ def help(client, message):
     )
 
 
-CHECK_INTERVAL = 7  # segundos entre verificaciones
-MAX_WAIT = 120  # tiempo máximo de espera (segundos)
-
-
-def wait_for_instance_ip(message, instance_id: str, region: str) -> str | None:
-    """Espera hasta que la instancia EC2 tenga IP pública y esté 'running'."""
-    ec2 = boto3.client("ec2", region_name=region)
-    message.reply(f"Esperando a que la instancia {instance_id} esté lista...")
-
-    start_time = time.time()
-    while time.time() - start_time < MAX_WAIT:
-        try:
-            response = ec2.describe_instances(InstanceIds=[instance_id])
-            instance = response["Reservations"][0]["Instances"][0]
-            state = instance["State"]["Name"]
-            ip = instance.get("PublicIpAddress")
-
-            if state == "running" and ip:
-                return ip
-
-            time.sleep(CHECK_INTERVAL)
-        except Exception as e:
-            message.reply(f"Error al consultar la instancia: {e}")
-            time.sleep(CHECK_INTERVAL)
-
-    message.reply("Tiempo máximo de espera alcanzado. No se obtuvo IP pública.")
-    return None
-
-
-def write_aws_credentials(message, credentials_text: str):
-    """Escribe las credenciales de AWS en el archivo por defecto, compatible con Linux y Windows."""
-    home_dir = Path.home()
-    aws_dir = home_dir / ".aws"
-    credentials_file = aws_dir / "credentials"
-
-    aws_dir.mkdir(parents=True, exist_ok=True)
-    try:
-        credentials_file.write_text(credentials_text.strip() + "\n", encoding="utf-8")
-        message.reply(f"Credenciales de AWS escritas en {credentials_file}")
-    except Exception as e:
-        message.reply(f"Error al escribir credenciales de AWS: {e}")
+# ============================================================
+# Helpers
+# ============================================================
 
 
 def ensure_admin(message):
@@ -108,51 +65,6 @@ def handle_api_error(
 # ============================================================
 # Comandos principales
 # ============================================================
-
-
-def update_ip(client, message, config: ManagerConfig):
-    try:
-        if not ensure_admin(message):
-            return
-
-        vocareum_api = prepare_vocareum_api(message, config.lab_config)
-        result = vocareum_api.get_aws_status()
-        if result.success is False:
-            return handle_api_error(message, config.lab_config)
-
-        if result.status != LabStatus.ready:
-            message.reply("La Máquina no está encendida. No se puede actualizar IP.")
-            return
-
-        message.reply("Obteniendo detalles de la Máquina...")
-        result = vocareum_api.get_aws()
-        if result.success is False:
-            return handle_api_error(message, config.lab_config)
-
-        content_parsed = cast(
-            AWSDetailsRunning, parse_lab_aws_details_content(result.content)
-        )
-        write_aws_credentials(message, content_parsed.copy_and_paste_credentials)
-
-        ip = wait_for_instance_ip(
-            message, config.aws_config.aws_instance_id, config.aws_config.aws_region
-        )
-        if ip is None:
-            message.reply("No se pudo obtener la IP de la instancia EC2.")
-            return
-
-        success = update_duckdns(
-            message,
-            config.duckdns_config.duckdns_domain,
-            config.duckdns_config.duckdns_token,
-            ip,
-        )
-
-        if success:
-            message.reply("Proceso de actualización de IP finalizado con éxito.")
-
-    except Exception as e:
-        message.reply(str(e))
 
 
 def get_aws_status(client, message, config: LabConfig):
