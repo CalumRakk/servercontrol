@@ -72,7 +72,6 @@ async def stop_minecraft_server(
     await interaction.response.defer(ephemeral=True)
     session_name = config.terminal_session_name
 
-    check_process = subprocess.run(["tmux", "has-session", "-t", session_name])
     if exists_tmux_session(session_name) is False:
         await interaction.followup.send(
             f"El servidor de Minecraft no está en ejecución. No se encontró la sesión de tmux `{session_name}`."

@@ -43,11 +43,11 @@ def register_handlers_discord(bot: commands.Bot, config: ManagerConfig):
         interaction: discord.Interaction, error: app_commands.AppCommandError
     ):
         if isinstance(error, app_commands.MissingRole):
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "No tienes permiso para usar este comando.", ephemeral=True
             )
         else:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"Ocurrió un error: {error}", ephemeral=True
             )
 
@@ -70,11 +70,11 @@ def register_handlers_discord(bot: commands.Bot, config: ManagerConfig):
         interaction: discord.Interaction, error: app_commands.AppCommandError
     ):
         if isinstance(error, app_commands.MissingRole):
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "No tienes permiso para usar este comando.", ephemeral=True
             )
         else:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"Ocurrió un error: {error}", ephemeral=True
             )
 
