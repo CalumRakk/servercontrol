@@ -5,6 +5,10 @@ from discord.ext import commands
 from servercontrol.config import ManagerConfig
 
 from .commands import echo, start_minecraft_server, stop_minecraft_server
+from .logging_utils import log_command_usage, setup_command_logger
+
+command_logger = setup_command_logger()
+log_command = log_command_usage(command_logger)
 
 
 def register_handlers_discord(bot: commands.Bot, config: ManagerConfig):
@@ -21,6 +25,7 @@ def register_handlers_discord(bot: commands.Bot, config: ManagerConfig):
         ),
     )
     @app_commands.describe(text="El texto que quieres que repita.")
+    @log_command
     async def echo_command(interaction: discord.Interaction, text: str):
         await echo(interaction, text)
 
@@ -35,6 +40,7 @@ def register_handlers_discord(bot: commands.Bot, config: ManagerConfig):
         ),
     )
     @app_commands.checks.has_role("Admin")
+    @log_command
     async def server_start(interaction: discord.Interaction):
         await start_minecraft_server(interaction, config.minecraft_config)
 
@@ -62,6 +68,7 @@ def register_handlers_discord(bot: commands.Bot, config: ManagerConfig):
         ),
     )
     @app_commands.checks.has_role("Admin")
+    @log_command
     async def server_stop(interaction: discord.Interaction):
         await stop_minecraft_server(interaction, config.minecraft_config)
 
@@ -78,6 +85,7 @@ def register_handlers_discord(bot: commands.Bot, config: ManagerConfig):
                 f"Ocurrió un error: {error}", ephemeral=True
             )
 
+    # Evento que se ejecuta cuando el bot está listo
     @bot.event
     async def on_ready():
         print(f"Bot de Discord conectado como {bot.user}")
