@@ -5,8 +5,10 @@ from typing import Sequence, cast
 import discord
 
 from servercontrol.config import MinecraftConfig
+from servercontrol.discord.enums import ServerStatus
 
 from .guild_config import GuildConfigManager
+from .rcon_client import RCONAuthError, RCONConnectionError, SimpleRCONClient
 
 # --- Utilidades ---
 
@@ -15,6 +17,22 @@ def exists_tmux_session(session_name: str) -> bool:
     """Comprueba si una sesión de tmux con el nombre dado existe. Devuelve True si existe, False si no."""
     check_process = subprocess.run(["tmux", "has-session", "-t", session_name])
     return check_process.returncode == 0
+
+
+async def get_minecraft_server_status(config: MinecraftConfig) -> ServerStatus:
+    """
+    Verifica el estado real del servidor.
+    """
+    try:
+        async with SimpleRCONClient(
+            config.rcon_host, config.rcon_port, config.rcon_password
+        ) as client:
+            await client.execute("list")
+        return ServerStatus.ONLINE
+    except (RCONConnectionError, RCONAuthError) as e:
+        return ServerStatus.OFFLINE
+    except Exception as e:
+        return ServerStatus.UNKNOWN
 
 
 # --- Comandos ---
@@ -57,6 +75,13 @@ async def start_minecraft_server(
         )
         return
 
+    current_status = await get_minecraft_server_status(config)
+    if current_status == ServerStatus.ONLINE:
+        await interaction.followup.send(
+            "El servidor ya está online. No se necesita ninguna acción."
+        )
+        return
+
     try:
         subprocess.Popen(
             ["tmux", "new-session", "-s", session_name, "-d", str(start_script)]
@@ -86,8 +111,14 @@ async def stop_minecraft_server(
         )
         return
 
+    current_status = await get_minecraft_server_status(config)
+    if current_status == ServerStatus.OFFLINE:
+        await interaction.followup.send(
+            "El servidor ya está offline. No se necesita ninguna acción."
+        )
+        return
+
     try:
-        # Enviamos el comando 'stop' y luego la tecla Enter (C-m)
         subprocess.run(
             [
                 "tmux",
@@ -95,7 +126,7 @@ async def stop_minecraft_server(
                 "-t",
                 session_name,
                 "stop",
-                "C-m",
+                "C-m",  # Enviamos el comando 'stop' y luego la tecla Enter (C-m)
             ]
         )
         await interaction.followup.send(
@@ -167,3 +198,18 @@ async def setup_bot_role(
         await interaction.followup.send(
             f"Ocurrió un error inesperado al crear el rol: {e}", ephemeral=True
         )
+
+
+async def check_server_status(
+    interaction: discord.Interaction, config: MinecraftConfig
+):
+    """
+    Muestra el estado actual y real del servidor de Minecraft.
+    """
+    await interaction.response.defer(ephemeral=True)
+    status = await get_minecraft_server_status(config)
+
+    if status == ServerStatus.ONLINE:
+        await interaction.followup.send("**El servidor de Minecraft está Online.**")
+    else:
+        await interaction.followup.send("**El servidor de Minecraft está Offline.**")

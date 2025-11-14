@@ -11,6 +11,7 @@ from servercontrol.config import ManagerConfig
 from servercontrol.discord.guild_config import GuildConfigManager
 
 from .commands import (
+    check_server_status,
     echo,
     setup_bot_role,
     start_minecraft_server,
@@ -162,6 +163,20 @@ def register_handlers_discord(bot: commands.Bot, config: ManagerConfig):
             await interaction.followup.send(
                 f"Ocurrió un error: {error}", ephemeral=True
             )
+
+    # Comando estado del servidor
+    @bot.tree.command(
+        name="server_status",
+        description="Verifica si el servidor de Minecraft está online u offline.",
+        guild=(
+            discord.Object(id=config.discord_config.guild_id)
+            if config.discord_config.guild_id
+            else None
+        ),
+    )
+    @log_command
+    async def server_status(interaction: discord.Interaction):
+        await check_server_status(interaction, config.minecraft_config)
 
     # Evento que se ejecuta cuando el bot está listo
     @bot.event

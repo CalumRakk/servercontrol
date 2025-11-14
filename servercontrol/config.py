@@ -74,9 +74,13 @@ class OrchestratorConfig(BaseSettings):
 class MinecraftConfig(BaseSettings):
     """Configuración para la conexión RCON con el servidor de Minecraft."""
 
-    # rcon_host: str = Field("127.0.0.1", description="IP o dominio del servidor de Minecraft")
-    # rcon_port: int = Field(25575, description="Puerto RCON del servidor de Minecraft")
-    # rcon_password: str = Field(..., description="Contraseña RCON del servidor de Minecraft")
+    rcon_host: str = Field(
+        "127.0.0.1", description="IP o dominio del servidor de Minecraft"
+    )
+    rcon_port: int = Field(25575, description="Puerto RCON del servidor de Minecraft")
+    rcon_password: str = Field(
+        ..., description="Contraseña RCON del servidor de Minecraft"
+    )
 
     # variables para la gestión del proceso
     server_path: str = Field(
