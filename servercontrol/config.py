@@ -6,7 +6,7 @@ from labcontrol.config import Config as LabConfig
 from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings
 
-from .core.settings import TelegramConfig
+from .telegram.settings import TelegramConfig
 
 
 class AWSConfig(BaseSettings):
@@ -43,17 +43,23 @@ class LabControlEnvVars(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"
+
+
 class DiscordConfig(BaseSettings):
     """Configuración específica para Discord."""
 
     bot_token: str = Field(..., description="Token del bot de Discord")
-    guild_id: Optional[int] = Field(None, description="ID del servidor de Discord para pruebas (opcional)")
+    guild_id: Optional[int] = Field(
+        None, description="ID del servidor de Discord para pruebas (opcional)"
+    )
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"
         env_prefix = "DISCORD_"
+
+
 class OrchestratorConfig(BaseSettings):
     """Configuración global para el script orquestador."""
 
@@ -64,23 +70,23 @@ class OrchestratorConfig(BaseSettings):
         env_file_encoding = "utf-8"
         extra = "ignore"
 
+
 class ManagerConfig:
     def __init__(
         self,
         tg_config: TelegramConfig,
         lab_config: LabConfig,
         aws_config: AWSConfig,
-        duckdns_config: DuckDNSConfig,        
+        duckdns_config: DuckDNSConfig,
         discord_config: DiscordConfig,
-        orchestrator_config: OrchestratorConfig
+        orchestrator_config: OrchestratorConfig,
     ) -> None:
-        self.orchestrator_config = orchestrator_config 
+        self.orchestrator_config = orchestrator_config
         self.tg_config = tg_config
         self.lab_config = lab_config
         self.aws_config = aws_config
         self.duckdns_config = duckdns_config
         self.discord_config = discord_config
-        
 
 
 def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfig:
@@ -97,16 +103,16 @@ def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfi
         lab_env_vars = LabControlEnvVars(_env_file=env_file)  # type: ignore
         lab_config = LabConfig(
             unique_id=lab_env_vars.unique_id, password=lab_env_vars.password
-        ) # type: ignore
-        discord_config=DiscordConfig(_env_file=env_file) # type: ignore
-        orchestrator_config = OrchestratorConfig(_env_file=env_file) # type: ignore
+        )  # type: ignore
+        discord_config = DiscordConfig(_env_file=env_file)  # type: ignore
+        orchestrator_config = OrchestratorConfig(_env_file=env_file)  # type: ignore
         return ManagerConfig(
             tg_config=tg_config,
             lab_config=lab_config,
             aws_config=aws_config,
             duckdns_config=duckdns_config,
             discord_config=discord_config,
-            orchestrator_config=orchestrator_config
+            orchestrator_config=orchestrator_config,
         )
     except ValidationError as e:
         print(f"Error en la configuración del archivo {env_file}:\n{e}")

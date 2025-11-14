@@ -1,10 +1,11 @@
 import locale
 import logging
 
-from servercontrol.core.settings import TelegramConfig
+from servercontrol.telegram.settings import TelegramConfig
 
-logger= logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 _client_instance = None
+
 
 def init_telegram_client(settings: TelegramConfig):
     global _client_instance
@@ -12,7 +13,7 @@ def init_telegram_client(settings: TelegramConfig):
     if _client_instance:
         return _client_instance
 
-    logger= logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
     logger.info("Iniciando cliente de Telegram")
 
     from pyrogram.client import Client
@@ -28,8 +29,8 @@ def init_telegram_client(settings: TelegramConfig):
         api_hash=settings.api_hash,
         workdir=str(settings.worktable),
         lang_code=iso639,
-        bot_token=settings.bot_token
+        bot_token=settings.bot_token,
     )
     logger.info("Cliente de Telegram inicializado correctamente")
-    _client_instance= client
+    _client_instance = client
     return client
