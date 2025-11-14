@@ -15,7 +15,6 @@ async def main(path: Union[Path, str]):
     platform = config.orchestrator_config.bot_platform
     tasks = []
 
-
     # if platform in ["telegram", "both"]:
     #     print("Configurando bot de Telegram...")
     #     tg_client = init_telegram_client(config.tg_config)
@@ -29,9 +28,11 @@ async def main(path: Union[Path, str]):
         register_handlers_discord(discord_bot, config)
         tasks.append(discord_bot.start(config.discord_config.bot_token))
         print("Bot de Discord configurado.")
-    
+
     if not tasks:
-        print("No se ha seleccionado ninguna plataforma de bot para ejecutar. Cerrando.")
+        print(
+            "No se ha seleccionado ninguna plataforma de bot para ejecutar. Cerrando."
+        )
         return
 
     print(f"Iniciando bot(s) para la plataforma: '{platform}'...")

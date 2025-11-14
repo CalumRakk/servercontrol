@@ -63,12 +63,34 @@ class DiscordConfig(BaseSettings):
 class OrchestratorConfig(BaseSettings):
     """Configuración global para el script orquestador."""
 
-    bot_platform: Literal["discord", "telegram", "both"] = "both"
+    bot_platform: Literal["discord", "telegram", "both"] = "discord"
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"
+
+
+class MinecraftConfig(BaseSettings):
+    """Configuración para la conexión RCON con el servidor de Minecraft."""
+
+    # rcon_host: str = Field("127.0.0.1", description="IP o dominio del servidor de Minecraft")
+    # rcon_port: int = Field(25575, description="Puerto RCON del servidor de Minecraft")
+    # rcon_password: str = Field(..., description="Contraseña RCON del servidor de Minecraft")
+
+    # variables para la gestión del proceso
+    server_path: str = Field(
+        ..., description="Ruta absoluta al directorio del servidor de Minecraft"
+    )
+    terminal_session_name: str = Field(
+        "minecraft", description="Nombre de la sesión de tmux para el servidor"
+    )
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        extra = "ignore"
+        env_prefix = "MINECRAFT_"
 
 
 class ManagerConfig:
@@ -80,6 +102,7 @@ class ManagerConfig:
         duckdns_config: DuckDNSConfig,
         discord_config: DiscordConfig,
         orchestrator_config: OrchestratorConfig,
+        minecraft_config: MinecraftConfig,
     ) -> None:
         self.orchestrator_config = orchestrator_config
         self.tg_config = tg_config
@@ -87,6 +110,7 @@ class ManagerConfig:
         self.aws_config = aws_config
         self.duckdns_config = duckdns_config
         self.discord_config = discord_config
+        self.minecraft_config = minecraft_config
 
 
 def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfig:
@@ -106,6 +130,7 @@ def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfi
         )  # type: ignore
         discord_config = DiscordConfig(_env_file=env_file)  # type: ignore
         orchestrator_config = OrchestratorConfig(_env_file=env_file)  # type: ignore
+        minecraft_config = MinecraftConfig(_env_file=env_file)  # type: ignore
         return ManagerConfig(
             tg_config=tg_config,
             lab_config=lab_config,
@@ -113,6 +138,7 @@ def load_config_orchestator(env_path: Union[Path, str] = ".env") -> ManagerConfi
             duckdns_config=duckdns_config,
             discord_config=discord_config,
             orchestrator_config=orchestrator_config,
+            minecraft_config=minecraft_config,
         )
     except ValidationError as e:
         print(f"Error en la configuración del archivo {env_file}:\n{e}")
